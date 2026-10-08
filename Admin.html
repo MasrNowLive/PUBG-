@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة الإدارة - PUBG</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
+body{background:#0a0d12;color:#fff;min-height:100vh;background-image:radial-gradient(circle at 10% 0%,rgba(245,166,35,.08) 0%,transparent 40%),radial-gradient(circle at 90% 100%,rgba(45,125,255,.08) 0%,transparent 40%)}
+.wrap{display:flex;min-height:100vh}
+.side{width:250px;background:#12161d;padding:22px 14px;border-left:1px solid #252b36;display:flex;flex-direction:column;gap:8px}
+.brand{display:flex;align-items:center;gap:10px;font-size:1.1rem;font-weight:900;margin-bottom:24px;justify-content:center;color:#f5a623}
+.brand i{font-size:1.8rem}
+.side a{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:11px;color:#8a93a6;text-decoration:none;font-weight:700;font-size:.92rem;transition:.25s;cursor:pointer}
+.side a:hover,.side a.on{background:rgba(245,166,35,.1);color:#f5a623}
+.side a.out{margin-top:auto;color:#ef4444}
+.side a.out:hover{background:rgba(239,68,68,.1)}
+.main{flex:1;padding:26px;overflow-y:auto}
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.head h1{font-size:1.5rem;font-weight:900}
+.head h1 span{color:#f5a623}
+.badge{background:linear-gradient(135deg,#f5a623,#ff8c00);color:#000;padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:900}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.stat{background:#12161d;border:1px solid #252b36;border-radius:14px;padding:18px;display:flex;gap:13px;align-items:center}
+.stat .ic{width:50px;height:50px;border-radius:12px;display:flex;justify-content:center;align-items:center;font-size:1.3rem;color:#000}
+.stat h3{font-size:1.5rem;font-weight:900;color:#f5a623}
+.stat p{color:#8a93a6;font-size:.82rem;font-weight:700}
+.panel{background:#12161d;border:1px solid #252b36;border-radius:14px;padding:20px}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.ph h2{font-size:1.1rem;font-weight:900;color:#f5a623}
+.btn{background:linear-gradient(135deg,#f5a623,#ff8c00);color:#000;border:none;padding:10px 18px;border-radius:10px;font-weight:900;cursor:pointer;font-family:'Cairo';font-size:.88rem;transition:.25s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(245,166,35,.3)}
+.btn.gray{background:#1a1f28;color:#c5cbd6;border:1px solid #252b36}
+.btn.blue{background:linear-gradient(135deg,#2d7dff,#00e0ff);color:#fff}
+.btn.green{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px 9px;text-align:right;border-bottom:1px solid #252b36;font-size:.85rem}
+th{background:#1a1f28;font-weight:800;color:#f5a623;font-size:.78rem}
+tr:hover{background:#151a22}
+.tag{padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:900;display:inline-block}
+.tag.pending{background:rgba(245,166,35,.18);color:#f5a623}
+.tag.done{background:rgba(34,197,94,.2);color:#4ade80}
+.empty{text-align:center;color:#8a93a6;padding:35px 10px;font-weight:700}
+.mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);justify-content:center;align-items:center;z-index:100;padding:20px}
+.mask.on{display:flex}
+.modal{background:#12161d;border:1px solid #252b36;border-radius:18px;padding:26px;width:100%;max-width:480px;animation:pop .25s}
+@keyframes pop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal h3{margin-bottom:18px;font-size:1.15rem;color:#f5a623}
+.fr{margin-bottom:13px}
+.fr label{display:block;font-weight:700;font-size:.82rem;margin-bottom:5px;color:#8a93a6}
+.fr input{width:100%;padding:11px 14px;border:1.5px solid #252b36;border-radius:10px;font-family:'Cairo';font-size:.95rem;outline:none;background:#1a1f28;color:#fff;font-weight:600}
+.fr input:focus{border-color:#f5a623;box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+.mb{display:flex;gap:10px;margin-top:20px}
+.mb button{flex:1}
+
+/* ===== قسم رابط الإحالة ===== */
+.refBox{
+  background:linear-gradient(135deg,#1a1f28,#12161d);
+  border:1.5px solid #f5a623;border-radius:16px;
+  padding:20px;margin-bottom:22px;position:relative;overflow:hidden;
+}
+.refBox::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:3px;
+  background:linear-gradient(90deg,#f5a623,#00e0ff,#2d7dff);
+}
+.refBox h3{
+  color:#f5a623;font-size:1rem;font-weight:900;
+  margin-bottom:6px;display:flex;align-items:center;gap:8px;
+}
+.refBox .desc{color:#8a93a6;font-size:.8rem;margin-bottom:14px;line-height:1.5}
+.refRow{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:14px;flex-wrap:wrap;
+}
+.refLink{
+  flex:1;min-width:240px;
+  background:#0a0d12;padding:13px 16px;border-radius:11px;
+  font-family:monospace;font-size:.83rem;color:#00e0ff;
+  word-break:break-all;border:1px dashed #252b36;
+  direction:ltr;text-align:left;
+}
+.refMeta{
+  display:flex;gap:24px;flex-wrap:wrap;margin-top:14px;
+  padding-top:14px;border-top:1px solid #252b36;
+}
+.refMeta div{font-size:.83rem}
+.refMeta span{color:#8a93a6}
+.refMeta b{color:#f5a623;font-family:monospace}
+
+@media(max-width:768px){
+  .side{width:70px;padding:18px 8px}
+  .side a span,.brand span{display:none}
+  .side a{justify-content:center}
+  .main{padding:16px}
+  .refRow{flex-direction:column;align-items:stretch}
+  .refLink{min-width:auto}
+  .refBox .btn{width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- شاشة الدخول -->
+<div id="gate" style="position:fixed;inset:0;background:#0a0d12;z-index:200;display:flex;justify-content:center;align-items:center;padding:20px">
+  <div class="modal" style="text-align:center">
+    <h3><i class="fas fa-lock"></i> دخول لوحة الإدارة</h3>
+    <div class="fr"><input id="g-u" placeholder="اسم المستخدم" autocomplete="off"></div>
+    <div class="fr"><input id="g-p" type="password" placeholder="كلمة المرور"></div>
+    <div id="g-err" style="color:#f87171;font-size:.85rem;min-height:20px;margin-bottom:8px"></div>
+    <button class="btn" style="width:100%" onclick="gateLogin()">دخول</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <aside class="side">
+    <div class="brand"><i class="fas fa-crosshairs"></i><span>PUBG Admin</span></div>
+    <a class="on"><i class="fas fa-shopping-cart"></i><span>طلباتي</span></a>
+    <a class="out" onclick="logout()"><i class="fas fa-sign-out-alt"></i><span>خروج</span></a>
+  </aside>
+
+  <main class="main">
+    <div class="head">
+      <h1>مرحباً، <span id="nm">مدير</span></h1>
+      <div class="badge">Admin</div>
+    </div>
+
+    <!-- ✅ قسم رابط الإحالة (جديد) -->
+    <div class="refBox">
+      <h3><i class="fas fa-link"></i> رابط الإحالة الخاص بك</h3>
+      <p class="desc">ابعت الرابط ده للعملاء، أي طلب يجي منه هيظهر في لوحتك هنا تلقائياً.</p>
+      <div class="refRow">
+        <div class="refLink" id="refLinkTxt">جاري التحميل...</div>
+        <button class="btn" onclick="copyRefLink()">
+          <i class="fas fa-copy"></i> نسخ الرابط
+        </button>
+      </div>
+      <div class="refMeta">
+        <div><span>كود الإحالة:</span> <b id="refCodeTxt">-</b></div>
+        <div><span>اسم المستخدم:</span> <b id="userNameTxt" style="font-family:'Cairo'">-</b></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="ic" style="background:linear-gradient(135deg,#f5a623,#ff8c00)"><i class="fas fa-shopping-bag"></i></div><div><h3 id="s1">0</h3><p>إجمالي الطلبات</p></div></div>
+      <div class="stat"><div class="ic" style="background:linear-gradient(135deg,#ffc107,#ffdb4d)"><i class="fas fa-clock"></i></div><div><h3 id="s2">0</h3><p>قيد الانتظار</p></div></div>
+      <div class="stat"><div class="ic" style="background:linear-gradient(135deg,#22c55e,#16a34a)"><i class="fas fa-check-circle"></i></div><div><h3 id="s3">0</h3><p>مكتملة</p></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph">
+        <h2><i class="fas fa-list"></i> الطلبات</h2>
+        <button class="btn gray" onclick="loadOrders()"><i class="fas fa-sync"></i> تحديث</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>الخدمة</th><th>الباقة</th><th>الآيدي (1)</th><th>الآيدي (2)</th><th>واتساب</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, updateDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDN7uLYTFRWBb9x5dTV-bYr6iPA_YLq9VM",
+  authDomain: "dosha-games.firebaseapp.com",
+  databaseURL: "https://dosha-games-default-rtdb.firebaseio.com",
+  projectId: "dosha-games",
+  storageBucket: "dosha-games.firebasestorage.app",
+  messagingSenderId: "584565662439",
+  appId: "1:584565662439:web:775e8d06b3cab9d54bb842"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ===== توليد رابط الإحالة ===== */
+function buildRefLink(code){
+  // بنشيل اسم الملف الحالي ونحط مكانه index.html
+  const base = location.href.replace(/\/[^\/]*$/, '/');
+  return base + 'index.html?ref=' + code;
+}
+
+function displayRefInfo(){
+  const ref  = localStorage.getItem("pubg_adm_ref");
+  const user = localStorage.getItem("pubg_user") || "-";
+  const link = buildRefLink(ref);
+
+  document.getElementById("refLinkTxt").textContent = link;
+  document.getElementById("refCodeTxt").textContent = ref;
+  document.getElementById("userNameTxt").textContent = user;
+}
+
+window.copyRefLink = function(){
+  const link = document.getElementById("refLinkTxt").textContent;
+  navigator.clipboard.writeText(link).then(()=>{
+    alert("تم نسخ الرابط ✓\n" + link);
+  }).catch(()=>{
+    // طريقة بديلة للنسخ على الموبايل
+    const inp = document.createElement('input');
+    inp.value = link;
+    document.body.appendChild(inp);
+    inp.select();
+    document.execCommand('copy');
+    document.body.removeChild(inp);
+    alert("تم نسخ الرابط ✓");
+  });
+};
+
+/* ===== الدخول ===== */
+function unlock(){
+  document.getElementById("gate").style.display = "none";
+  document.getElementById("nm").textContent = localStorage.getItem("pubg_name") || "مدير";
+  displayRefInfo();
+  loadOrders();
+}
+
+window.gateLogin = async function(){
+  const u = document.getElementById("g-u").value.trim();
+  const p = document.getElementById("g-p").value.trim();
+  const err = document.getElementById("g-err");
+  if(!u || !p){ err.textContent = "املأ الحقول"; return; }
+  err.textContent = "جاري التحقق...";
+  try{
+    const snap = await getDocs(query(collection(db,"admins"),
+      where("username","==",u),
+      where("password","==",p),
+      where("type","==","pubg")));
+    if(snap.empty){ err.textContent = "بيانات غير صحيحة"; return; }
+    const a = snap.docs[0].data();
+    if(!a.referralCode){ err.textContent = "الحساب ده ملوش كود إحالة"; return; }
+    localStorage.setItem("pubg_adm_ref", String(a.referralCode).trim().toLowerCase());
+    localStorage.setItem("pubg_name", a.name || u);
+    localStorage.setItem("pubg_user", u);
+    err.textContent = "";
+    unlock();
+  }catch(e){
+    err.textContent = "خطأ: " + (e.code || e.message);
+  }
+};
+
+document.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && document.getElementById("gate").style.display !== "none") gateLogin();
+});
+
+/* ===== الطلبات ===== */
+window.loadOrders = async function(){
+  const ref = localStorage.getItem("pubg_adm_ref");
+  const tb = document.getElementById("ordersBody");
+  tb.innerHTML = '<tr><td colspan="8" class="empty">جاري التحميل...</td></tr>';
+  try{
+    const snap = await getDocs(query(collection(db,"pubg_orders"), where("assignedAdminId","==",ref)));
+    let total=0, pend=0, done=0, rows="";
+    snap.forEach(d=>{
+      const o = d.data();
+      total++;
+      if(o.status==="pending") pend++;
+      if(o.status==="completed") done++;
+      const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds*1000).toLocaleDateString("ar-EG") : "-";
+      const tag = o.status==="pending" ? '<span class="tag pending">قيد الانتظار</span>' : '<span class="tag done">مكتمل</span>';
+      rows += `<tr>
+        <td>${o.serviceLabel||o.service||'-'}</td>
+        <td>${o.package||'-'}</td>
+        <td><b>${o.playerId||'-'}</b></td>
+        <td><b>${o.playerIdConfirm||'-'}</b></td>
+        <td>${o.whatsapp||'-'}</td>
+        <td>${tag}</td>
+        <td>${date}</td>
+        <td>${o.status==="pending"?`<button class="btn green" onclick="markDone('${d.id}')" style="padding:6px 12px;font-size:.75rem"><i class="fas fa-check"></i> تم</button>`:'-'}</td>
+      </tr>`;
+    });
+    document.getElementById("s1").textContent = total;
+    document.getElementById("s2").textContent = pend;
+    document.getElementById("s3").textContent = done;
+    tb.innerHTML = rows || '<tr><td colspan="8" class="empty">لا توجد طلبات بعد</td></tr>';
+  }catch(e){
+    console.error(e);
+    tb.innerHTML = `<tr><td colspan="8" class="empty">خطأ: ${e.code||e.message}</td></tr>`;
+  }
+};
+
+window.markDone = async function(id){
+  if(!confirm("تأكيد إن الطلب تم شحنه؟")) return;
+  try{
+    await updateDoc(doc(db,"pubg_orders",id), { status:"completed", completedAt:new Date() });
+    loadOrders();
+  }catch(e){ alert("خطأ: "+(e.code||e.message)); }
+};
+
+window.logout = function(){
+  ["pubg_adm_ref","pubg_name","pubg_user"].forEach(k=>localStorage.removeItem(k));
+  location.reload();
+};
+
+/* لو كان مسجل دخول قبل كده يفتح على طول */
+if(localStorage.getItem("pubg_adm_ref")) unlock();
+</script>
+</body>
+</html>
