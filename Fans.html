@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>فاحص الروابط</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--line:#30363d;--tx:#e6edf3;--mut:#8b949e;--ok:#3fb950;--warn:#d29922;--bad:#f85149;--acc:#2f81f7}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:16px}
+.wrap{width:100%;max-width:640px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:16px}
+h1{font-size:22px;margin:8px 0}
+h2{font-size:16px;margin:0 0 12px}
+input,button{font:inherit;border-radius:10px;border:1px solid var(--line);padding:12px;width:100%;background:#0d1117;color:var(--tx)}
+input{margin-bottom:10px;direction:ltr;text-align:left}
+button{background:var(--acc);border:0;cursor:pointer;font-weight:600}
+button.sec{background:transparent;border:1px solid var(--line);width:auto;padding:8px 14px;font-weight:400}
+button:disabled{opacity:.5}
+.hide{display:none}
+.top{display:flex;justify-content:space-between;align-items:center}
+.err{color:var(--bad);font-size:14px;min-height:20px}
+.mut{color:var(--mut);font-size:13px}
+.bar{height:10px;background:#21262d;border-radius:6px;overflow:hidden;margin:10px 0}
+.bar>div{height:100%;width:0;transition:width .4s}
+.verdict{font-size:20px;font-weight:700}
+ul{padding:0;margin:12px 0 0;list-style:none}
+li{padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:14px;display:flex;gap:8px;justify-content:space-between}
+li b{white-space:nowrap}
+.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.links a{color:var(--acc);font-size:14px}
+details{margin-top:14px}
+summary{cursor:pointer;color:var(--mut);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ تسجيل الدخول ============ -->
+<section id="login" class="card">
+  <h1>🔐 فاحص الروابط</h1>
+  <p class="mut">سجّل الدخول بالبيانات اللي أعطاها لك الأدمن.</p>
+  <input id="u" placeholder="اسم المستخدم" autocomplete="username">
+  <input id="p" type="password" placeholder="كلمة المرور" autocomplete="current-password">
+  <button id="loginBtn">دخول</button>
+  <div class="err" id="loginErr"></div>
+</section>
+
+<!-- ============ الأداة ============ -->
+<section id="app" class="hide">
+  <div class="top">
+    <h1>🛡️ فاحص الروابط</h1>
+    <button class="sec" id="logout">خروج</button>
+  </div>
+  <div class="mut" id="subInfo"></div>
+  <div class="card">
+    <h2>الصق الرابط</h2>
+    <input id="url" placeholder="https://example.com/login" inputmode="url">
+    <button id="scanBtn">افحص</button>
+    <div class="mut" style="margin-top:8px">الفحص لا يفتح الرابط ولا يزوره.</div>
+    <details>
+      <summary>إعدادات متقدمة (Google Safe Browsing)</summary>
+      <p class="mut">اختياري: حط API Key من Google Cloud لتفعيل الفحص ضد قاعدة جوجل. بيتخزن في متصفحك فقط.</p>
+      <input id="gkey" placeholder="Safe Browsing API key">
+      <button class="sec" id="saveKey">حفظ</button>
+    </details>
+  </div>
+  <div class="card hide" id="result">
+    <div class="verdict" id="verdict"></div>
+    <div class="bar"><div id="fill"></div></div>
+    <div class="mut" id="scoreTxt"></div>
+    <ul id="findings"></ul>
+    <div class="links" id="ext"></div>
+    <p class="mut">النتيجة تقدير مبني على مؤشرات، مش ضمان. الرابط الجديد جدًا ممكن يطلع "نظيف" وهو خطر.</p>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ---- الحسابات بتتقرأ من Firestore (collection: users) ----
+const FB = { projectId: 'dosha-games', apiKey: 'AIzaSyDN7uLYTFRWBb9x5dTV-bYr6iPA_YLq9VM' };
+const FS_URL = `https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents/users/`;
+async function fetchUser(name) {
+  if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(name)) return null;
+  const r = await fetch(FS_URL + encodeURIComponent(name) + '?key=' + FB.apiKey);
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('net');
+  const j = await r.json(), f = j.fields || {};
+  if (!f.app || f.app.stringValue !== 'linkchecker') return null;
+  return {
+    s: f.s.stringValue, h: f.h.stringValue, i: parseInt(f.i.integerValue || '150000'),
+    active: f.active ? f.active.booleanValue !== false : true,
+    unl: f.unlimited ? f.unlimited.booleanValue === true : !f.remainingSec,
+    rem: f.remainingSec ? parseInt(f.remainingSec.integerValue) : 0,
+    dev: f.deviceId ? f.deviceId.stringValue : '',
+    upd: j.updateTime
+  };
+}
+
+// ---- معرّف الجهاز (بيتولّد مرة واحدة ويتخزن في المتصفح) ----
+function deviceId() {
+  let d = ''; try { d = localStorage.getItem('lc_dev') || ''; } catch (e) {}
+  if (!/^[0-9a-f]{32}$/.test(d)) {
+    d = [...crypto.getRandomValues(new Uint8Array(16))].map(x => x.toString(16).padStart(2, '0')).join('');
+    try { localStorage.setItem('lc_dev', d); } catch (e) {}
+  }
+  return d;
+}
+const LINKED = 'الحساب مربوط بالفعل بجهاز آخر.';
+
+function accessError(rec) {
+  if (!rec.active) return 'الحساب موقوف. تواصل مع الأدمن.';
+  if (!rec.unl && rec.rem <= 0) return 'انتهى رصيد وقتك. تواصل مع الأدمن للتجديد.';
+  return '';
+}
+// أول جهاز يسجّل بيتربط بالحساب (التحديث مشروط بـ updateTime عشان لو جهازين دخلوا في نفس اللحظة واحد بس ينجح)
+async function bindDevice(name, rec) {
+  const me = deviceId();
+  if (rec.dev) return rec.dev === me ? '' : LINKED;
+  const r = await fetch(FS_URL + encodeURIComponent(name) + '?updateMask.fieldPaths=deviceId&updateMask.fieldPaths=boundAt&currentDocument.updateTime=' + encodeURIComponent(rec.upd) + '&key=' + FB.apiKey, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: { deviceId: { stringValue: me }, boundAt: { timestampValue: new Date().toISOString() } } })
+  });
+  if (r.ok) return '';
+  const again = await fetchUser(name);
+  if (again && again.dev === me) return '';
+  if (again && again.dev) return LINKED;
+  return 'تعذّر ربط الجهاز. جرّب تاني.';
+}
+// ---- عدّاد الرصيد ----
+// الرصيد (بالثواني) محفوظ في السحابة. بيتنقص أثناء ما الأداة مفتوحة والشاشة ظاهرة،
+// والمدة بتتقاس بساعة المتصفح الداخلية (performance.now) فتغيير تاريخ التليفون ملوش تأثير.
+// كل 30 ثانية بيتخصم الوقت من السحابة بعملية ذرّية (increment) والسحابة بترجّع الرصيد الجديد.
+const FS_COMMIT = 'https://firestore.googleapis.com/v1/projects/' + FB.projectId + '/databases/(default)/documents:commit?key=' + FB.apiKey;
+let remain = Infinity, acc = 0, lastT = performance.now(), timerOn = false, beating = false;
+const loggedIn = () => { try { return !!sessionStorage.getItem('lc_user'); } catch (e) { return false; } };
+function fmtLeft(s) {
+  s = Math.max(0, Math.floor(s));
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  const p = n => String(n).padStart(2, '0');
+  return (d ? d + ' يوم ' : '') + p(h) + ':' + p(m) + ':' + p(x);
+}
+function paint() {
+  const el = $('subInfo'); if (!el) return;
+  el.textContent = remain === Infinity ? 'رصيد غير محدود' : 'الوقت المتبقي: ' + fmtLeft(remain - acc);
+}
+function setSub(rec) {
+  remain = rec.unl ? Infinity : rec.rem; acc = 0; lastT = performance.now();
+  paint();
+  if (!timerOn) {
+    timerOn = true;
+    setInterval(tickSec, 1000);
+    setInterval(beat, 30000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') beat(); });
+    window.addEventListener('pagehide', beat);
+  }
+}
+function tickSec() {
+  const n = performance.now();
+  if (document.visibilityState === 'visible' && loggedIn() && remain !== Infinity) acc += Math.min(5, (n - lastT) / 1000);
+  lastT = n;
+  if (!loggedIn()) return;
+  paint();
+  if (remain !== Infinity && remain - acc <= 0) beat();
+}
+async function beat() {
+  if (beating || remain === Infinity || !loggedIn()) return;
+  const s = Math.floor(acc);
+  if (s >= 1) {
+    beating = true; acc -= s;
+    try {
+      const name = sessionStorage.getItem('lc_user');
+      const r = await fetch(FS_COMMIT, {
+        method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ writes: [{
+          update: { name: 'projects/' + FB.projectId + '/databases/(default)/documents/users/' + name },
+          updateMask: { fieldPaths: [] },
+          updateTransforms: [{ fieldPath: 'remainingSec', increment: { integerValue: String(-s) } }],
+          currentDocument: { exists: true }
+        }] })
+      });
+      if (r.ok) { const j = await r.json(); remain = parseInt(j.writeResults[0].transformResults[0].integerValue); }
+      else acc += s;
+    } catch (e) { acc += s; }
+    beating = false;
+  }
+  if (loggedIn() && remain !== Infinity && remain - acc <= 0) logoutNow('انتهى رصيد وقتك. تواصل مع الأدمن للتجديد.');
+}
+// يتحقق من الجلسة الحالية (موقوف؟ منتهي؟ الجهاز اتغيّر؟). يرجّع '' لو تمام، 'NET' لو مفيش اتصال
+async function recheck() {
+  await beat();
+  let name = ''; try { name = sessionStorage.getItem('lc_user') || ''; } catch (e) {}
+  if (!name) return 'انتهت الجلسة. سجّل الدخول.';
+  let rec; try { rec = await fetchUser(name); } catch (e) { return 'NET'; }
+  if (!rec) return 'الحساب غير موجود.';
+  const m = accessError(rec);
+  if (m) return m;
+  if (!rec.dev) return 'تم إعادة ضبط الجهاز. سجّل الدخول تاني.';
+  if (rec.dev !== deviceId()) return LINKED;
+  setSub(rec);
+  return '';
+}
+function logoutNow(msg) {
+  try { sessionStorage.removeItem('lc_user'); } catch (e) {}
+  showLogin(); $('loginErr').textContent = msg || '';
+}
+
+const $ = id => document.getElementById(id);
+const enc = new TextEncoder();
+const hex2b = h => new Uint8Array(h.match(/../g).map(x => parseInt(x, 16)));
+const b2hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+
+async function pbkdf2(pw, saltHex, iter) {
+  const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: hex2b(saltHex), iterations: iter, hash: 'SHA-256' }, key, 256);
+  return b2hex(bits);
+}
+
+// ---------- تسجيل الدخول ----------
+let fails = 0, lockUntil = 0;
+async function doLogin() {
+  const err = $('loginErr');
+  const now = Date.now();
+  if (now < lockUntil) { err.textContent = 'محاولات كتير. استنى ' + Math.ceil((lockUntil - now) / 1000) + ' ثانية.'; return; }
+  const name = $('u').value.trim().toLowerCase(), pw = $('p').value;
+  if (!name || !pw) { err.textContent = 'اكتب اسم المستخدم وكلمة المرور.'; return; }
+  $('loginBtn').disabled = true;
+  let rec = null;
+  try { rec = await fetchUser(name); }
+  catch (e) { $('loginBtn').disabled = false; err.textContent = 'تعذّر الاتصال بالسحابة. جرّب تاني.'; return; }
+  const salt = rec ? rec.s : '00'.repeat(16);
+  const iter = rec ? rec.i : 150000;
+  const h = await pbkdf2(pw, salt, iter);
+  $('loginBtn').disabled = false;
+  if (rec && h === rec.h) {
+    // الباسورد صح: نتحقق من الاشتراك وبعدين ربط الجهاز
+    let m = accessError(rec);
+    if (!m) { try { m = await bindDevice(name, rec); } catch (e) { m = 'تعذّر الاتصال بالسحابة. جرّب تاني.'; } }
+    if (m) { err.textContent = m; return; }
+    fails = 0; err.textContent = '';
+    try { sessionStorage.setItem('lc_user', name); } catch (e) {}
+    setSub(rec);
+    showApp();
+  } else {
+    fails++;
+    if (fails >= 5) { lockUntil = Date.now() + 30000; fails = 0; }
+    err.textContent = 'بيانات الدخول غلط.';
+  }
+}
+function showApp() { $('login').classList.add('hide'); $('app').classList.remove('hide'); }
+function showLogin() { $('app').classList.add('hide'); $('login').classList.remove('hide'); $('p').value = ''; }
+$('loginBtn').onclick = doLogin;
+$('p').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+$('logout').onclick = async () => { await beat(); try { sessionStorage.removeItem('lc_user'); } catch (e) {} showLogin(); };
+try {
+  if (sessionStorage.getItem('lc_user')) {
+    showApp();
+    recheck().then(m => { if (m && m !== 'NET') logoutNow(m); });
+  }
+} catch (e) {}
+
+try { $('gkey').value = localStorage.getItem('lc_gkey') || ''; } catch (e) {}
+$('saveKey').onclick = () => { try { localStorage.setItem('lc_gkey', $('gkey').value.trim()); } catch (e) {} $('saveKey').textContent = 'تم ✓'; setTimeout(() => $('saveKey').textContent = 'حفظ', 1200); };
+
+// ---------- محرك الفحص ----------
+const SHORTENERS = ['bit.ly','tinyurl.com','t.co','goo.gl','ow.ly','is.gd','buff.ly','cutt.ly','rebrand.ly','shorturl.at','tiny.cc','rb.gy','lnkd.in','s.id'];
+const BAD_TLDS = ['tk','ml','ga','cf','gq','zip','mov','top','xyz','click','country','work','support','icu','rest','cam','monster','buzz','loan','men','date','download','link'];
+const KEYWORDS = ['login','signin','verify','secure','account','update','bank','wallet','password','confirm','suspend','unlock','billing','invoice','recover','authenticate','prize','gift'];
+const BRANDS = { paypal:'paypal.com', google:'google.com', facebook:'facebook.com', instagram:'instagram.com', apple:'apple.com', icloud:'icloud.com', microsoft:'microsoft.com', outlook:'outlook.com', amazon:'amazon.com', netflix:'netflix.com', whatsapp:'whatsapp.com', binance:'binance.com', telegram:'telegram.org', linkedin:'linkedin.com', dhl:'dhl.com', fedex:'fedex.com', vodafone:'vodafone.com', twitter:'twitter.com', tiktok:'tiktok.com', steam:'steampowered.com' };
+const SLD = ['co','com','org','net','gov','edu','ac'];
+
+function registrable(host) {
+  const l = host.split('.');
+  if (l.length >= 3 && SLD.includes(l[l.length - 2]) && l[l.length - 1].length === 2) return l.slice(-3).join('.');
+  return l.slice(-2).join('.');
+}
+function entropy(s) {
+  const m = {}; for (const c of s) m[c] = (m[c] || 0) + 1;
+  return -Object.values(m).reduce((a, n) => a + (n / s.length) * Math.log2(n / s.length), 0);
+}
+
+function analyze(raw) {
+  const F = []; // {pts,msg}
+  let u;
+  try { u = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : 'http://' + raw); } catch (e) { return null; }
+  if (!/^https?:$/.test(u.protocol)) { F.push({ pts: 40, msg: 'بروتوكول غير معتاد: ' + u.protocol }); }
+  const host = u.hostname.toLowerCase();
+  const isIP = /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':');
+  const reg = isIP ? host : registrable(host);
+  const labels = host.split('.');
+
+  if (u.protocol === 'http:') F.push({ pts: 10, msg: 'الرابط بدون HTTPS' });
+  if (isIP) F.push({ pts: 25, msg: 'الرابط بيستخدم IP بدل اسم دومين' });
+  if (host.includes('xn--')) F.push({ pts: 25, msg: 'دومين Punycode (ممكن حروف مموّهة شبه الحروف الأصلية)' });
+  if (/@/.test(raw.split('?')[0].replace(/^[a-z]+:\/\//i, '').split('/')[0])) F.push({ pts: 20, msg: 'فيه علامة @ في الرابط (تخفي الوجهة الحقيقية)' });
+  if (raw.length > 90) F.push({ pts: 8, msg: 'الرابط طويل جدًا (' + raw.length + ' حرف)' });
+  if (!isIP && labels.length > 4) F.push({ pts: 10, msg: 'عدد كبير من النطاقات الفرعية (' + (labels.length - 2) + ')' });
+  if ((host.match(/-/g) || []).length >= 3) F.push({ pts: 8, msg: 'شرطات كتير في اسم الدومين' });
+  if (SHORTENERS.includes(host)) F.push({ pts: 15, msg: 'رابط مختصر: مش واضح الوجهة النهائية' });
+  const tld = labels[labels.length - 1];
+  if (!isIP && BAD_TLDS.includes(tld)) F.push({ pts: 15, msg: 'امتداد دومين كتر استخدامه في الاحتيال (.' + tld + ')' });
+  if (u.port && !['80', '443'].includes(u.port)) F.push({ pts: 8, msg: 'منفذ غير معتاد: ' + u.port });
+
+  const hay = (host + u.pathname).toLowerCase();
+  const kw = KEYWORDS.filter(k => hay.includes(k));
+  if (kw.length) F.push({ pts: Math.min(18, kw.length * 6), msg: 'كلمات شائعة في التصيّد: ' + kw.join('، ') });
+
+  if (/[?&](url|redirect|redir|next|goto|link|return)=https?/i.test(u.search)) F.push({ pts: 12, msg: 'الرابط بيحوّل لرابط تاني (Open redirect)' });
+  if ((raw.match(/%[0-9a-f]{2}/gi) || []).length > 6) F.push({ pts: 5, msg: 'ترميز % كتير (إخفاء محتمل)' });
+  if (/\.(exe|scr|apk|bat|cmd|msi|js|vbs|jar|zip|rar|iso)$/i.test(u.pathname)) F.push({ pts: 15, msg: 'الرابط بينزّل ملف تنفيذي/مضغوط' });
+
+  if (!isIP) {
+    const main = labels[labels.length - 2] || '';
+    if (main.length > 8 && entropy(main) > 3.5) F.push({ pts: 8, msg: 'اسم الدومين يبدو عشوائي' });
+    // انتحال علامة تجارية
+    let flagged = false;
+    for (const [b, real] of Object.entries(BRANDS)) {
+      if (host.includes(b) && reg !== real && !reg.endsWith('.' + real)) {
+        F.push({ pts: 25, msg: 'الدومين بيذكر "' + b + '" لكنه مش الدومين الرسمي (' + real + ')' }); flagged = true; break;
+      }
+    }
+    if (!flagged) {
+      const norm = host.replace(/0/g, 'o').replace(/1/g, 'l').replace(/rn/g, 'm').replace(/vv/g, 'w').replace(/5/g, 's');
+      if (norm !== host) for (const [b, real] of Object.entries(BRANDS)) {
+        if (norm.includes(b) && !host.includes(b) && reg !== real) { F.push({ pts: 30, msg: 'تقليد بصري لاسم "' + b + '" باستبدال حروف بأرقام' }); break; }
+      }
+    }
+  }
+  return { u, host, reg, isIP, F };
+}
+
+async function rdapAge(reg) {
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch('https://rdap.org/domain/' + encodeURIComponent(reg), { signal: ctl.signal });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const ev = (j.events || []).find(e => e.eventAction === 'registration');
+    return ev ? new Date(ev.eventDate) : null;
+  } catch (e) { return null; } finally { clearTimeout(t); }
+}
+
+async function safeBrowsing(url, key) {
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const r = await fetch('https://safebrowsing.googleapis.com/v4/threatMatches:find?key=' + encodeURIComponent(key), {
+      method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client: { clientId: 'link-checker', clientVersion: '1.0' },
+        threatInfo: {
+          threatTypes: ['MALWARE', 'SOCIAL_ENGINEERING', 'UNWANTED_SOFTWARE', 'POTENTIALLY_HARMFUL_APPLICATION'],
+          platformTypes: ['ANY_PLATFORM'], threatEntryTypes: ['URL'], threatEntries: [{ url }]
+        }
+      })
+    });
+    if (!r.ok) return { err: true };
+    const j = await r.json();
+    return { matches: j.matches || [] };
+  } catch (e) { return { err: true }; } finally { clearTimeout(t); }
+}
+
+function addItem(list, pts, msg, cls) {
+  const li = document.createElement('li');
+  const s = document.createElement('span'); s.textContent = msg;
+  const b = document.createElement('b'); b.textContent = pts > 0 ? '+' + pts : (pts < 0 ? String(pts) : '•');
+  b.style.color = cls || (pts > 0 ? 'var(--warn)' : 'var(--ok)');
+  li.append(s, b); list.append(li);
+}
+
+$('scanBtn').onclick = async () => {
+  const raw = $('url').value.trim();
+  if (!raw) return;
+  const chk = await recheck();
+  if (chk === 'NET') { alert('تعذّر التحقق من الاشتراك. اتأكد من الاتصال بالإنترنت.'); return; }
+  if (chk) { logoutNow(chk); return; }
+  const btn = $('scanBtn'); btn.disabled = true; btn.textContent = 'جاري الفحص…';
+  const res = analyze(raw);
+  const box = $('result'), list = $('findings');
+  list.textContent = ''; $('ext').textContent = '';
+  if (!res) { box.classList.remove('hide'); $('verdict').textContent = 'رابط غير صالح'; $('fill').style.width = '0'; $('scoreTxt').textContent = ''; btn.disabled = false; btn.textContent = 'افحص'; return; }
+
+  let score = res.F.reduce((a, f) => a + f.pts, 0);
+  res.F.forEach(f => addItem(list, f.pts, f.msg));
+
+  // عمر الدومين
+  if (!res.isIP) {
+    const d = await rdapAge(res.reg);
+    if (d && !isNaN(d)) {
+      const days = Math.floor((Date.now() - d) / 864e5);
+      if (days < 30) { score += 30; addItem(list, 30, 'الدومين مسجّل من ' + days + ' يوم فقط'); }
+      else if (days < 180) { score += 12; addItem(list, 12, 'الدومين حديث (' + days + ' يوم)'); }
+      else if (days > 1095) { score -= 8; addItem(list, -8, 'الدومين قديم (' + Math.floor(days / 365) + ' سنة)'); }
+      else addItem(list, 0, 'عمر الدومين: ' + days + ' يوم');
+    } else addItem(list, 0, 'تعذّر معرفة عمر الدومين', 'var(--mut)');
+  }
+
+  // Safe Browsing
+  let key = ''; try { key = localStorage.getItem('lc_gkey') || ''; } catch (e) {}
+  if (key) {
+    const sb = await safeBrowsing(res.u.href, key);
+    if (sb.err) addItem(list, 0, 'تعذّر الاتصال بـ Google Safe Browsing', 'var(--mut)');
+    else if (sb.matches.length) { score += 60; addItem(list, 60, 'جوجل مصنّف الرابط خطر: ' + [...new Set(sb.matches.map(m => m.threatType))].join(', '), 'var(--bad)'); }
+    else addItem(list, 0, 'Google Safe Browsing: غير مُبلَّغ عنه', 'var(--ok)');
+  }
+
+  score = Math.max(0, Math.min(100, score));
+  const v = $('verdict'), fill = $('fill');
+  let txt, col;
+  if (score >= 50) { txt = '🚨 خطير على الأغلب'; col = 'var(--bad)'; }
+  else if (score >= 20) { txt = '⚠️ مشبوه'; col = 'var(--warn)'; }
+  else { txt = '✅ مفيش مؤشرات واضحة'; col = 'var(--ok)'; }
+  v.textContent = txt; v.style.color = col;
+  fill.style.background = col; fill.style.width = score + '%';
+  $('scoreTxt').textContent = 'درجة الخطورة: ' + score + ' / 100  •  الدومين: ' + res.reg;
+  if (!res.F.length) addItem(list, 0, 'مفيش مؤشرات شكلية مريبة في الرابط', 'var(--ok)');
+
+  // روابط فحص خارجي (بتفتح في تبويب جديد، الرابط بيتبعت للخدمة مش بيتزار)
+  const enc1 = encodeURIComponent(res.u.href);
+  [['VirusTotal', 'https://www.virustotal.com/gui/search/' + enc1], ['URLScan', 'https://urlscan.io/search/#' + enc1], ['Google Safe Browsing', 'https://transparencyreport.google.com/safe-browsing/search?url=' + enc1]].forEach(([n, h]) => {
+    const a = document.createElement('a'); a.href = h; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = n + ' ↗'; $('ext').append(a);
+  });
+
+  box.classList.remove('hide'); box.scrollIntoView({ behavior: 'smooth' });
+  btn.disabled = false; btn.textContent = 'افحص';
+};
+$('url').addEventListener('keydown', e => { if (e.key === 'Enter') $('scanBtn').click(); });
+</script>
+</body>
+</html>
